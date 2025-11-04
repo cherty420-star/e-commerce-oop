@@ -39,7 +39,8 @@ def main():
     print(f"Описание: {smartphones.description}")
     print(f"Количество товаров: {len(smartphones.products)}")
     first_product = smartphones.products[0]
-    print(f"Первый товар: {first_product.name} - {first_product.price} руб.")
+    product_info = f"Первый товар: {first_product.name} - {first_product.price} руб."
+    print(product_info)
 
     print("\n=== Статистика ===")
     print(f"Всего категорий: {Category.category_count}")

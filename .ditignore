@@ -1,3 +1,9 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
 # Python
 __pycache__/
 *.py[cod]
@@ -19,28 +25,21 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# PyCharm
-.idea/
-*.iml
-*.ipr
-*.iws
-.DS_Store
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Virtual environment
-venv/
-.venv/
+# Environments
+.env
+.venv
 env/
+venv/
 ENV/
-
-# Logs
-*.log
-logs/
-
-# Database
-*.db
-*.sqlite3
+env.bak/
+venv.bak/
 
 # OS
+.DS_Store
 Thumbs.db
