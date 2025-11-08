@@ -24,12 +24,35 @@ class TestProduct:
         assert product.price == 500.50
         assert product.quantity == 10
 
+    def test_product_private_price(self):
+        """Тест, что атрибут цены действительно приватный."""
+        product = Product("Тестовый товар", "Описание", 1000.0, 5)
+
+        # Проверяем, что атрибут приватный (с именем _Product__price)
+        assert hasattr(product, '_Product__price')
+        assert product._Product__price == 1000.0
+
+        # Проверяем, что прямой доступ к __price не работает
+        with pytest.raises(AttributeError):
+            _ = product.__price
+
+    def test_price_getter(self):
+        """Тест геттера для цены."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+
+        # Проверяем, что геттер возвращает правильное значение
+        assert product.price == 1000.0
+
+        # Проверяем, что геттер работает через свойство
+        assert isinstance(type(product).price, property)
+
     def test_price_setter_positive(self):
         """Тест сеттера цены с положительным значением."""
         product = Product("Товар", "Описание", 1000.0, 5)
         product.price = 1500.0
 
         assert product.price == 1500.0
+        assert product._Product__price == 1500.0  # Проверяем приватный атрибут
 
     def test_price_setter_negative(self):
         """Тест сеттера цены с отрицательным значением."""
@@ -41,6 +64,7 @@ class TestProduct:
 
         # Цена не должна измениться
         assert product.price == original_price
+        assert product._Product__price == original_price
 
     def test_price_setter_zero(self):
         """Тест сеттера цены с нулевым значением."""
@@ -52,6 +76,7 @@ class TestProduct:
 
         # Цена не должна измениться
         assert product.price == original_price
+        assert product._Product__price == original_price
 
     def test_class_method_new_product(self):
         """Тест класс-метода new_product."""
@@ -113,6 +138,19 @@ class TestCategory:
         assert category.description == "Описание категории"
         assert len(category.get_products_list()) == 1
         assert category.get_products_list()[0].name == "Товар"
+
+    def test_category_private_products(self):
+        """Тест, что атрибут products действительно приватный."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        category = Category("Категория", "Описание", [product])
+
+        # Проверяем, что атрибут приватный (с именем _Category__products)
+        assert hasattr(category, '_Category__products')
+        assert len(category._Category__products) == 1
+
+        # Проверяем, что прямой доступ к __products не работает
+        with pytest.raises(AttributeError):
+            _ = category.__products
 
     def test_category_count(self):
         """Тест подсчета количества категорий."""
@@ -177,25 +215,49 @@ class TestCategory:
         category = Category("Категория", "Описание", [product1, product2])
 
         products_string = category.products
-        expected_lines = [
-            "Товар 1, 1000.0 руб. Остаток: 5 шт.",
-            "Товар 2, 2000.0 руб. Остаток: 3 шт."
-        ]
 
-        # Проверяем, что каждая строка присутствует
-        for expected_line in expected_lines:
-            assert expected_line in products_string
+        # Проверяем форматирование вывода
+        expected_line1 = "Товар 1, 1000.0 руб. Остаток: 5 шт."
+        expected_line2 = "Товар 2, 2000.0 руб. Остаток: 3 шт."
 
-    def test_private_products_access(self):
-        """Тест, что атрибут _products приватный."""
-        category = Category("Категория", "Описание")
+        assert expected_line1 in products_string
+        assert expected_line2 in products_string
 
-        # Проверяем, что доступ к _products возможен только через методы
-        assert hasattr(category, '_products')
+        # Проверяем, что геттер возвращает строку
+        assert isinstance(products_string, str)
 
-        # Прямой доступ должен работать (в Python приватность условна)
-        # Но мы проверяем, что используем методы доступа
-        assert isinstance(category._products, list)
+    def test_products_getter_format(self):
+        """Тест формата вывода геттера products."""
+        product = Product("Тестовый товар", "Описание", 1234.56, 7)
+        category = Category("Категория", "Описание", [product])
+
+        products_string = category.products
+        expected = "Тестовый товар, 1234.56 руб. Остаток: 7 шт."
+
+        assert products_string == expected
+
+    def test_products_getter_empty(self):
+        """Тест геттера products для пустой категории."""
+        category = Category("Пустая категория", "Описание", [])
+
+        products_string = category.products
+        assert products_string == ""
+
+    def test_get_products_list_method(self):
+        """Тест метода get_products_list."""
+        product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
+
+        category = Category("Категория", "Описание", [product1, product2])
+
+        products_list = category.get_products_list()
+
+        # Проверяем, что возвращается список объектов Product
+        assert isinstance(products_list, list)
+        assert len(products_list) == 2
+        assert all(isinstance(product, Product) for product in products_list)
+        assert products_list[0].name == "Товар 1"
+        assert products_list[1].name == "Товар 2"
 
 
 class TestJSONLoading:
@@ -236,6 +298,80 @@ class TestJSONLoading:
         """Тест загрузки из несуществующего файла."""
         categories = load_categories_from_json("nonexistent.json")
         assert categories == []
+
+    def test_json_loading_private_attributes(self):
+        """Тест, что после загрузки из JSON атрибуты остаются приватными."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        json_path = os.path.join(project_root, "data", "products.json")
+
+        categories = load_categories_from_json(json_path)
+
+        # Проверяем, что у всех категорий атрибут products приватный
+        for category in categories:
+            assert hasattr(category, '_Category__products')
+            with pytest.raises(AttributeError):
+                _ = category.__products
+
+        # Проверяем, что у всех товаров атрибут price приватный
+        for category in categories:
+            for product in category.get_products_list():
+                assert hasattr(product, '_Product__price')
+                with pytest.raises(AttributeError):
+                    _ = product.__price
+
+
+class TestIntegration:
+    """Интеграционные тесты."""
+
+    def setup_method(self):
+        """Сброс счетчиков перед каждым тестом."""
+        Category.category_count = 0
+        Category.product_count = 0
+
+    def test_full_workflow(self):
+        """Тест полного рабочего процесса."""
+        # Создаем товары
+        product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
+
+        # Создаем категорию
+        category = Category("Категория", "Описание")
+
+        # Добавляем товары через метод
+        category.add_product(product1)
+        category.add_product(product2)
+
+        # Проверяем состояние
+        assert len(category.get_products_list()) == 2
+        assert Category.category_count == 1
+        assert Category.product_count == 2
+
+        # Проверяем геттер
+        products_str = category.products
+        assert "Товар 1, 1000.0 руб. Остаток: 5 шт." in products_str
+        assert "Товар 2, 2000.0 руб. Остаток: 3 шт." in products_str
+
+        # Проверяем приватность атрибутов
+        assert hasattr(category, '_Category__products')
+        assert hasattr(product1, '_Product__price')
+        assert hasattr(product2, '_Product__price')
+
+    def test_price_validation_workflow(self):
+        """Тест workflow с валидацией цены."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+
+        # Успешное изменение цены
+        product.price = 1500.0
+        assert product.price == 1500.0
+
+        # Неуспешное изменение (отрицательная цена)
+        product.price = -500.0
+        assert product.price == 1500.0  # Цена не изменилась
+
+        # Неуспешное изменение (нулевая цена)
+        product.price = 0
+        assert product.price == 1500.0  # Цена не изменилась
 
 
 if __name__ == "__main__":

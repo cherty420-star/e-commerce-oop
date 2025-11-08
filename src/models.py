@@ -9,7 +9,7 @@ class Product:
     Attributes:
         name (str): Название товара
         description (str): Описание товара
-        _price (float): Цена товара (приватный атрибут)
+        __price (float): Цена товара (приватный атрибут)
         quantity (int): Количество в наличии
     """
 
@@ -25,13 +25,13 @@ class Product:
         """
         self.name = name
         self.description = description
-        self._price = price  # Приватный атрибут
+        self.__price = price  # ПРАВИЛЬНЫЙ приватный атрибут (два подчеркивания)
         self.quantity = quantity
 
     @property
     def price(self):
         """Геттер для цены."""
-        return self._price
+        return self.__price
 
     @price.setter
     def price(self, new_price: float):
@@ -45,16 +45,16 @@ class Product:
             print("Цена не должна быть нулевая или отрицательная")
         else:
             # Дополнительная логика с подтверждением пользователем
-            if hasattr(self, '_price') and new_price < self._price:
+            if hasattr(self, '_Product__price') and new_price < self.__price:
                 confirmation = input(
-                    f"Цена понижается с {self._price} до {new_price}. "
+                    f"Цена понижается с {self.__price} до {new_price}. "
                     f"Подтвердите изменение (y/n): "
                 )
                 if confirmation.lower() != 'y':
                     print("Изменение цены отменено")
                     return
 
-            self._price = new_price
+            self.__price = new_price
 
     @classmethod
     def new_product(cls, product_data: Dict, products_list: List['Product'] = None):
@@ -79,19 +79,19 @@ class Product:
                 if existing_product.name.lower() == name.lower():
                     # Объединяем количество и выбираем максимальную цену
                     existing_product.quantity += quantity
-                    if price > existing_product.price:
-                        existing_product.price = price
+                    if price > existing_product.price:  # Используем геттер
+                        existing_product.price = price  # Используем сеттер
                     return existing_product
 
         return cls(name, description, price, quantity)
 
     def __str__(self):
         """Строковое представление товара."""
-        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."  # Используем геттер
 
     def __repr__(self):
         """Представление объекта для отладки."""
-        return f"Product('{self.name}', '{self.description}', {self.price}, {self.quantity})"
+        return f"Product('{self.name}', '{self.description}', {self.price}, {self.quantity})"  # Используем геттер
 
 
 class Category:
@@ -101,7 +101,7 @@ class Category:
     Attributes:
         name (str): Название категории
         description (str): Описание категории
-        _products (List[Product]): Список товаров в категории (приватный)
+        __products (List[Product]): Список товаров в категории (приватный)
 
     Class Attributes:
         category_count (int): Общее количество категорий
@@ -122,13 +122,13 @@ class Category:
         """
         self.name = name
         self.description = description
-        self._products = products if products is not None else []
+        self.__products = products if products is not None else []  # ПРАВИЛЬНЫЙ приватный атрибут
 
         # Увеличиваем счетчик категорий
         Category.category_count += 1
 
         # Увеличиваем счетчик товаров на количество товаров в этой категории
-        Category.product_count += len(self._products)
+        Category.product_count += len(self.__products)
 
     def add_product(self, product: Product):
         """
@@ -137,28 +137,28 @@ class Category:
         Args:
             product: Объект товара для добавления
         """
-        self._products.append(product)
+        self.__products.append(product)
         Category.product_count += 1
 
     @property
     def products(self):
         """Геттер для списка товаров в формате строк."""
         products_str = ""
-        for product in self._products:
+        for product in self.__products:  # Используем приватный атрибут
             products_str += f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n"
         return products_str.rstrip()  # Убираем последний перенос строки
 
     def get_products_list(self):
         """Возвращает список объектов товаров (для внутреннего использования)."""
-        return self._products
+        return self.__products  # Используем приватный атрибут
 
     def __str__(self):
         """Строковое представление категории."""
-        return f"{self.name}, количество продуктов: {len(self._products)}"
+        return f"{self.name}, количество продуктов: {len(self.__products)}"  # Используем приватный атрибут
 
     def __repr__(self):
         """Представление объекта для отладки."""
-        return f"Category('{self.name}', '{self.description}', {len(self._products)} products)"
+        return f"Category('{self.name}', '{self.description}', {len(self.__products)} products)"  # Используем приватный атрибут
 
 
 def load_categories_from_json(file_path: str) -> List[Category]:
