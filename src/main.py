@@ -37,45 +37,36 @@ def main():
     smartphones.add_product(product1)
     smartphones.add_product(product2)
 
-    print("=== Ручное создание объектов ===")
-    print(f"Категория: {smartphones.name}")
-    print(f"Описание: {smartphones.description}")
-    print(f"Количество товаров: {len(smartphones.get_products_list())}")
+    print("=== Строковое представление объектов ===")
+    print("Товар 1:", product1)
+    print("Товар 2:", product2)
+    print("Категория:", smartphones)
 
-    print("\n=== Список товаров через геттер ===")
+    print("\n=== Магический метод сложения ===")
+    total_value = product1 + product2
+    print(f"Общая стоимость {product1.name} и {product2.name}: {total_value} руб.")
+
+    # Демонстрация работы итератора (дополнительное задание)
+    print("\n=== Итерация по товарам категории ===")
+    print("Товары в категории (через цикл for):")
+    for product in smartphones:
+        print(f"  - {product}")
+
+    # Демонстрация оптимизированного геттера products
+    print("\n=== Оптимизированный геттер products ===")
     print(smartphones.products)
 
-    print("\n=== Статистика ===")
-    print(f"Всего категорий: {Category.category_count}")
-    print(f"Всего товаров: {Category.product_count}")
+    # Демонстрация с другими товарами
+    print("\n=== Дополнительная демонстрация сложения ===")
+    product3 = Product("Ноутбук", "Игровой ноутбук", 150000.0, 2)
+    product4 = Product("Планшет", "Графический планшет", 50000.0, 3)
 
-    # Демонстрация работы с ценой
-    print("\n=== Демонстрация сеттера цены ===")
-    print(f"Текущая цена {product1.name}: {product1.price} руб.")
+    total_laptop_tablet = product3 + product4
+    print(f"Общая стоимость {product3.name} и {product4.name}: {total_laptop_tablet} руб.")
 
-    # Попытка установить отрицательную цену
-    product1.price = -1000  # Должно вывести сообщение об ошибке
-
-    # Установка корректной цены
-    product1.price = 75000.0
-    print(f"Новая цена {product1.name}: {product1.price} руб.")
-
-    # Демонстрация класс-метода
-    print("\n=== Демонстрация класс-метода ===")
-    new_product_data = {
-        'name': 'Xiaomi Redmi Note 12',
-        'description': 'Бюджетный смартфон',
-        'price': 25000.0,
-        'quantity': 8
-    }
-
-    new_product = Product.new_product(new_product_data)
-    print(f"Создан новый товар: {new_product}")
-
-    # Добавляем новый товар в категорию
-    smartphones.add_product(new_product)
-    print(f"\nОбновленный список товаров в категории '{smartphones.name}':")
-    print(smartphones.products)
+    # Проверка расчета: 150000 * 2 + 50000 * 3 = 300000 + 150000 = 450000
+    expected = (150000.0 * 2) + (50000.0 * 3)
+    print(f"Проверка расчета: {expected} руб. (совпадает: {total_laptop_tablet == expected})")
 
     # Загрузка из JSON
     print("\n=== Загрузка из JSON ===")
@@ -86,10 +77,10 @@ def main():
     if categories:
         print(f"Загружено категорий: {len(categories)}")
         for category in categories:
-            print(f"\nКатегория: {category.name}")
-            print(f"Товаров: {len(category.get_products_list())}")
+            print(f"\nКатегория: {category}")  # Используем __str__
             print("Список товаров:")
-            print(category.products)
+            for product in category:  # Используем итератор
+                print(f"  - {product}")
 
     print("\n=== Итоговая статистика ===")
     print(f"Всего категорий: {Category.category_count}")

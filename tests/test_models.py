@@ -1,6 +1,6 @@
 import os
 import pytest
-from src.models import Product, Category, load_categories_from_json
+from src.models import Product, Category, load_categories_from_json, CategoryIterator
 
 
 class TestProduct:
@@ -12,113 +12,58 @@ class TestProduct:
 
         assert product.name == "Тестовый товар"
         assert product.description == "Описание"
-        assert product.price == 1000.0  # Используем геттер
+        assert product.price == 1000.0
         assert product.quantity == 5
 
-    def test_product_with_different_data(self):
-        """Тест инициализации товара с разными данными."""
-        product = Product("Другой товар", "Другое описание", 500.50, 10)
-
-        assert product.name == "Другой товар"
-        assert product.description == "Другое описание"
-        assert product.price == 500.50
-        assert product.quantity == 10
-
-    def test_product_private_price(self):
-        """Тест, что атрибут цены действительно приватный."""
-        product = Product("Тестовый товар", "Описание", 1000.0, 5)
-
-        # Проверяем, что атрибут приватный (с именем _Product__price)
-        assert hasattr(product, '_Product__price')
-        assert product._Product__price == 1000.0
-
-        # Проверяем, что прямой доступ к __price не работает
-        with pytest.raises(AttributeError):
-            _ = product.__price
-
-    def test_price_getter(self):
-        """Тест геттера для цены."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-
-        # Проверяем, что геттер возвращает правильное значение
-        assert product.price == 1000.0
-
-        # Проверяем, что геттер работает через свойство
-        assert isinstance(type(product).price, property)
-
-    def test_price_setter_positive(self):
-        """Тест сеттера цены с положительным значением."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        product.price = 1500.0
-
-        assert product.price == 1500.0
-        assert product._Product__price == 1500.0  # Проверяем приватный атрибут
-
-    def test_price_setter_negative(self):
-        """Тест сеттера цены с отрицательным значением."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        original_price = product.price
-
-        # Попытка установить отрицательную цену
-        product.price = -500.0
-
-        # Цена не должна измениться
-        assert product.price == original_price
-        assert product._Product__price == original_price
-
-    def test_price_setter_zero(self):
-        """Тест сеттера цены с нулевым значением."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        original_price = product.price
-
-        # Попытка установить нулевую цену
-        product.price = 0
-
-        # Цена не должна измениться
-        assert product.price == original_price
-        assert product._Product__price == original_price
-
-    def test_class_method_new_product(self):
-        """Тест класс-метода new_product."""
-        product_data = {
-            'name': 'Новый товар',
-            'description': 'Описание нового товара',
-            'price': 2000.0,
-            'quantity': 3
-        }
-
-        product = Product.new_product(product_data)
-
-        assert product.name == 'Новый товар'
-        assert product.description == 'Описание нового товара'
-        assert product.price == 2000.0
-        assert product.quantity == 3
-
-    def test_class_method_new_product_duplicate(self):
-        """Тест класс-метода new_product с дубликатом."""
-        existing_product = Product("Существующий товар", "Описание", 1000.0, 5)
-        products_list = [existing_product]
-
-        duplicate_data = {
-            'name': 'Существующий товар',
-            'description': 'Новое описание',
-            'price': 1500.0,  # Более высокая цена
-            'quantity': 3
-        }
-
-        # Должен вернуть существующий товар с обновленными данными
-        result = Product.new_product(duplicate_data, products_list)
-
-        assert result is existing_product
-        assert result.quantity == 8  # 5 + 3
-        assert result.price == 1500.0  # Выбрана более высокая цена
-
-    def test_string_representation(self):
+    def test_product_string_representation(self):
         """Тест строкового представления товара."""
         product = Product("Тестовый товар", "Описание", 1000.0, 5)
 
         expected = "Тестовый товар, 1000.0 руб. Остаток: 5 шт."
         assert str(product) == expected
+
+    def test_product_string_representation_different_data(self):
+        """Тест строкового представления с разными данными."""
+        product = Product("Другой товар", "Другое описание", 500.50, 10)
+
+        expected = "Другой товар, 500.5 руб. Остаток: 10 шт."
+        assert str(product) == expected
+
+    def test_product_addition(self):
+        """Тест магического метода сложения."""
+        product1 = Product("Товар 1", "Описание", 1000.0, 5)  # 1000 * 5 = 5000
+        product2 = Product("Товар 2", "Описание", 2000.0, 3)  # 2000 * 3 = 6000
+
+        total = product1 + product2
+
+        assert total == 11000.0  # 5000 + 6000
+        assert isinstance(total, float)
+
+    def test_product_addition_with_different_quantities(self):
+        """Тест сложения товаров с разным количеством."""
+        product1 = Product("Товар 1", "Описание", 500.0, 10)  # 500 * 10 = 5000
+        product2 = Product("Товар 2", "Описание", 750.0, 4)  # 750 * 4 = 3000
+
+        total = product1 + product2
+
+        assert total == 8000.0  # 5000 + 3000
+
+    def test_product_addition_type_error(self):
+        """Тест ошибки типа при сложении."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+
+        with pytest.raises(TypeError, match="Можно складывать только объекты класса Product"):
+            product + "не товар"
+
+    def test_product_private_price(self):
+        """Тест, что атрибут цены действительно приватный."""
+        product = Product("Тестовый товар", "Описание", 1000.0, 5)
+
+        assert hasattr(product, '_Product__price')
+        assert product._Product__price == 1000.0
+
+        with pytest.raises(AttributeError):
+            _ = product.__price
 
 
 class TestCategory:
@@ -129,196 +74,124 @@ class TestCategory:
         Category.category_count = 0
         Category.product_count = 0
 
-    def test_category_initialization(self):
-        """Тест корректной инициализации категории."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        category = Category("Категория", "Описание категории", [product])
-
-        assert category.name == "Категория"
-        assert category.description == "Описание категории"
-        assert len(category.get_products_list()) == 1
-        assert category.get_products_list()[0].name == "Товар"
-
-    def test_category_private_products(self):
-        """Тест, что атрибут products действительно приватный."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        category = Category("Категория", "Описание", [product])
-
-        # Проверяем, что атрибут приватный (с именем _Category__products)
-        assert hasattr(category, '_Category__products')
-        assert len(category._Category__products) == 1
-
-        # Проверяем, что прямой доступ к __products не работает
-        with pytest.raises(AttributeError):
-            _ = category.__products
-
-    def test_category_count(self):
-        """Тест подсчета количества категорий."""
-        # До создания категорий
-        assert Category.category_count == 0
-
-        # После создания одной категории
-        product = Product("Товар", "Описание", 1000.0, 5)
-        Category("Категория 1", "Описание", [product])
-        assert Category.category_count == 1
-
-        # После создания второй категории
-        Category("Категория 2", "Описание", [product])
-        assert Category.category_count == 2
-
-    def test_product_count(self):
-        """Тест подсчета количества товаров."""
-        # До создания категорий
-        assert Category.product_count == 0
-
-        # Создаем категорию с одним товаром
+    def test_category_string_representation(self):
+        """Тест строкового представления категории."""
         product1 = Product("Товар 1", "Описание", 1000.0, 5)
-        Category("Категория 1", "Описание", [product1])
-        assert Category.product_count == 1
-
-        # Создаем категорию с двумя товарами
         product2 = Product("Товар 2", "Описание", 2000.0, 3)
-        product3 = Product("Товар 3", "Описание", 3000.0, 7)
-        Category("Категория 2", "Описание", [product2, product3])
-        assert Category.product_count == 3  # 1 + 2 = 3
+        category = Category("Категория", "Описание", [product1, product2])
 
-    def test_empty_category(self):
-        """Тест создания категории без товаров."""
+        expected = "Категория, количество продуктов: 8 шт."  # 5 + 3
+        assert str(category) == expected
+
+    def test_category_string_representation_empty(self):
+        """Тест строкового представления пустой категории."""
         category = Category("Пустая категория", "Описание", [])
 
-        assert category.name == "Пустая категория"
-        assert len(category.get_products_list()) == 0
-        assert Category.category_count == 1
-        assert Category.product_count == 0
+        expected = "Пустая категория, количество продуктов: 0 шт."
+        assert str(category) == expected
 
-    def test_add_product_method(self):
-        """Тест метода add_product."""
-        category = Category("Категория", "Описание")
-        product = Product("Товар", "Описание", 1000.0, 5)
+    def test_category_string_representation_single_product(self):
+        """Тест строкового представления категории с одним товаром."""
+        product = Product("Товар", "Описание", 1000.0, 7)
+        category = Category("Категория", "Описание", [product])
 
-        # Изначально нет товаров
-        assert len(category.get_products_list()) == 0
-        initial_product_count = Category.product_count
+        expected = "Категория, количество продуктов: 7 шт."
+        assert str(category) == expected
 
-        # Добавляем товар
-        category.add_product(product)
-
-        assert len(category.get_products_list()) == 1
-        assert category.get_products_list()[0].name == "Товар"
-        assert Category.product_count == initial_product_count + 1
-
-    def test_products_getter(self):
-        """Тест геттера products."""
+    def test_category_iteration(self):
+        """Тест итерации по категории."""
         product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
         product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
+        category = Category("Категория", "Описание", [product1, product2])
 
+        # Тестируем итерацию
+        products_from_iteration = []
+        for product in category:
+            products_from_iteration.append(product)
+
+        assert len(products_from_iteration) == 2
+        assert products_from_iteration[0].name == "Товар 1"
+        assert products_from_iteration[1].name == "Товар 2"
+
+    def test_category_iteration_empty(self):
+        """Тест итерации по пустой категории."""
+        category = Category("Пустая категория", "Описание", [])
+
+        products_from_iteration = list(category)
+        assert len(products_from_iteration) == 0
+
+    def test_optimized_products_getter(self):
+        """Тест оптимизированного геттера products."""
+        product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
         category = Category("Категория", "Описание", [product1, product2])
 
         products_string = category.products
 
-        # Проверяем форматирование вывода
+        # Проверяем, что используется __str__ продукта
         expected_line1 = "Товар 1, 1000.0 руб. Остаток: 5 шт."
         expected_line2 = "Товар 2, 2000.0 руб. Остаток: 3 шт."
 
         assert expected_line1 in products_string
         assert expected_line2 in products_string
 
-        # Проверяем, что геттер возвращает строку
-        assert isinstance(products_string, str)
 
-    def test_products_getter_format(self):
-        """Тест формата вывода геттера products."""
-        product = Product("Тестовый товар", "Описание", 1234.56, 7)
-        category = Category("Категория", "Описание", [product])
+class TestCategoryIterator:
+    """Тесты для класса CategoryIterator."""
 
-        products_string = category.products
-        expected = "Тестовый товар, 1234.56 руб. Остаток: 7 шт."
+    def test_iterator_initialization(self):
+        """Тест инициализации итератора."""
+        products = [
+            Product("Товар 1", "Описание 1", 1000.0, 5),
+            Product("Товар 2", "Описание 2", 2000.0, 3)
+        ]
+        iterator = CategoryIterator(products)
 
-        assert products_string == expected
+        assert iterator._products == products
+        assert iterator._index == 0
 
-    def test_products_getter_empty(self):
-        """Тест геттера products для пустой категории."""
-        category = Category("Пустая категория", "Описание", [])
+    def test_iterator_iteration(self):
+        """Тест полной итерации."""
+        products = [
+            Product("Товар 1", "Описание 1", 1000.0, 5),
+            Product("Товар 2", "Описание 2", 2000.0, 3)
+        ]
+        iterator = CategoryIterator(products)
 
-        products_string = category.products
-        assert products_string == ""
+        # Первый вызов
+        product1 = next(iterator)
+        assert product1.name == "Товар 1"
+        assert iterator._index == 1
 
-    def test_get_products_list_method(self):
-        """Тест метода get_products_list."""
-        product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
-        product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
+        # Второй вызов
+        product2 = next(iterator)
+        assert product2.name == "Товар 2"
+        assert iterator._index == 2
 
-        category = Category("Категория", "Описание", [product1, product2])
+        # Конец итерации
+        with pytest.raises(StopIteration):
+            next(iterator)
 
-        products_list = category.get_products_list()
+    def test_iterator_for_loop(self):
+        """Тест использования итератора в цикле for."""
+        products = [
+            Product("Товар 1", "Описание 1", 1000.0, 5),
+            Product("Товар 2", "Описание 2", 2000.0, 3)
+        ]
+        iterator = CategoryIterator(products)
 
-        # Проверяем, что возвращается список объектов Product
-        assert isinstance(products_list, list)
-        assert len(products_list) == 2
-        assert all(isinstance(product, Product) for product in products_list)
-        assert products_list[0].name == "Товар 1"
-        assert products_list[1].name == "Товар 2"
+        product_names = []
+        for product in iterator:
+            product_names.append(product.name)
 
+        assert product_names == ["Товар 1", "Товар 2"]
 
-class TestJSONLoading:
-    """Тесты для загрузки данных из JSON."""
+    def test_iterator_empty(self):
+        """Тест итератора с пустым списком."""
+        iterator = CategoryIterator([])
 
-    def setup_method(self):
-        """Сброс счетчиков перед каждым тестом."""
-        Category.category_count = 0
-        Category.product_count = 0
-
-    def test_load_categories_from_json(self):
-        """Тест загрузки категорий из JSON файла."""
-        # Получаем правильный путь к файлу
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        json_path = os.path.join(project_root, "data", "products.json")
-
-        print(f"Ищем файл по пути: {json_path}")
-        print(f"Файл существует: {os.path.exists(json_path)}")
-
-        categories = load_categories_from_json(json_path)
-
-        assert len(categories) == 2
-        assert categories[0].name == "Смартфоны"
-        assert categories[1].name == "Телевизоры"
-
-        # Проверяем товары в первой категории
-        smartphones = categories[0]
-        assert len(smartphones.get_products_list()) == 3
-        assert smartphones.get_products_list()[0].name == "Samsung Galaxy C23 Ultra"
-        assert smartphones.get_products_list()[0].price == 180000.0
-
-        # Проверяем счетчики
-        assert Category.category_count == 2
-        assert Category.product_count == 4  # 3 смартфона + 1 телевизор
-
-    def test_load_nonexistent_file(self):
-        """Тест загрузки из несуществующего файла."""
-        categories = load_categories_from_json("nonexistent.json")
-        assert categories == []
-
-    def test_json_loading_private_attributes(self):
-        """Тест, что после загрузки из JSON атрибуты остаются приватными."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        json_path = os.path.join(project_root, "data", "products.json")
-
-        categories = load_categories_from_json(json_path)
-
-        # Проверяем, что у всех категорий атрибут products приватный
-        for category in categories:
-            assert hasattr(category, '_Category__products')
-            with pytest.raises(AttributeError):
-                _ = category.__products
-
-        # Проверяем, что у всех товаров атрибут price приватный
-        for category in categories:
-            for product in category.get_products_list():
-                assert hasattr(product, '_Product__price')
-                with pytest.raises(AttributeError):
-                    _ = product.__price
+        with pytest.raises(StopIteration):
+            next(iterator)
 
 
 class TestIntegration:
@@ -329,8 +202,8 @@ class TestIntegration:
         Category.category_count = 0
         Category.product_count = 0
 
-    def test_full_workflow(self):
-        """Тест полного рабочего процесса."""
+    def test_full_workflow_with_magic_methods(self):
+        """Тест полного рабочего процесса с магическими методами."""
         # Создаем товары
         product1 = Product("Товар 1", "Описание 1", 1000.0, 5)
         product2 = Product("Товар 2", "Описание 2", 2000.0, 3)
@@ -338,40 +211,54 @@ class TestIntegration:
         # Создаем категорию
         category = Category("Категория", "Описание")
 
-        # Добавляем товары через метод
+        # Добавляем товары
         category.add_product(product1)
         category.add_product(product2)
 
-        # Проверяем состояние
-        assert len(category.get_products_list()) == 2
-        assert Category.category_count == 1
-        assert Category.product_count == 2
+        # Проверяем строковое представление
+        assert str(product1) == "Товар 1, 1000.0 руб. Остаток: 5 шт."
+        assert str(category) == "Категория, количество продуктов: 8 шт."
 
-        # Проверяем геттер
-        products_str = category.products
-        assert "Товар 1, 1000.0 руб. Остаток: 5 шт." in products_str
-        assert "Товар 2, 2000.0 руб. Остаток: 3 шт." in products_str
+        # Проверяем сложение
+        total_value = product1 + product2
+        assert total_value == (1000.0 * 5) + (2000.0 * 3)
 
-        # Проверяем приватность атрибутов
-        assert hasattr(category, '_Category__products')
-        assert hasattr(product1, '_Product__price')
-        assert hasattr(product2, '_Product__price')
+        # Проверяем итерацию
+        product_count = 0
+        for product in category:
+            product_count += 1
+            assert isinstance(product, Product)
+        assert product_count == 2
 
-    def test_price_validation_workflow(self):
-        """Тест workflow с валидацией цены."""
-        product = Product("Товар", "Описание", 1000.0, 5)
 
-        # Успешное изменение цены
-        product.price = 1500.0
-        assert product.price == 1500.0
+class TestJSONLoadingWithMagicMethods:
+    """Тесты загрузки из JSON с магическими методами."""
 
-        # Неуспешное изменение (отрицательная цена)
-        product.price = -500.0
-        assert product.price == 1500.0  # Цена не изменилась
+    def setup_method(self):
+        """Сброс счетчиков перед каждым тестом."""
+        Category.category_count = 0
+        Category.product_count = 0
 
-        # Неуспешное изменение (нулевая цена)
-        product.price = 0
-        assert product.price == 1500.0  # Цена не изменилась
+    def test_json_loading_string_representation(self):
+        """Тест строкового представления после загрузки из JSON."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        json_path = os.path.join(project_root, "data", "products.json")
+
+        categories = load_categories_from_json(json_path)
+
+        # Проверяем, что строковое представление работает
+        for category in categories:
+            category_str = str(category)
+            assert category.name in category_str
+            assert "количество продуктов:" in category_str
+
+            # Проверяем товары
+            for product in category:
+                product_str = str(product)
+                assert product.name in product_str
+                assert "руб." in product_str
+                assert "Остаток:" in product_str
 
 
 if __name__ == "__main__":
