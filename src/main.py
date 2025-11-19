@@ -1,5 +1,5 @@
 import os
-from src.models import Product, Category, load_categories_from_json
+from src.models import Product, Smartphone, LawnGrass, Category, load_categories_from_json
 
 
 def get_data_path():
@@ -12,55 +12,127 @@ def get_data_path():
 def main():
     """Основная функция для демонстрации работы классов."""
 
-    # Создание товаров вручную
-    product1 = Product(
-        name="Samsung Galaxy S23",
-        description="Флагманский смартфон",
-        price=80000.0,
-        quantity=10
+    print("=== Демонстрация классов-наследников ===")
+
+    # Создание смартфонов
+    smartphone1 = Smartphone(
+        name="iPhone 15 Pro",
+        description="Флагманский смартфон Apple",
+        price=120000.0,
+        quantity=8,
+        efficiency=4.5,
+        model="15 Pro",
+        memory=256,
+        color="Титановый синий"
     )
 
-    product2 = Product(
-        name="iPhone 14",
-        description="Премиум смартфон",
-        price=90000.0,
-        quantity=5
+    smartphone2 = Smartphone(
+        name="Samsung Galaxy S24",
+        description="Флагманский смартфон Samsung",
+        price=100000.0,
+        quantity=12,
+        efficiency=4.8,
+        model="S24 Ultra",
+        memory=512,
+        color="Черный"
     )
 
-    # Создание категории вручную
-    smartphones = Category(
-        name="Смартфоны",
-        description="Мобильные устройства",
-        products=[product1, product2]
+    # Создание газонной травы
+    lawn_grass1 = LawnGrass(
+        name="Газонная трава Премиум",
+        description="Элитная газонная трава для ландшафтного дизайна",
+        price=2500.0,
+        quantity=50,
+        country="Германия",
+        germination_period=14,
+        color="Ярко-зеленый"
     )
 
-    print("=== Ручное создание объектов ===")
-    print(f"Категория: {smartphones.name}")
-    print(f"Описание: {smartphones.description}")
-    print(f"Количество товаров: {len(smartphones.products)}")
-    first_product = smartphones.products[0]
-    print(f"Первый товар: {first_product.name} - {first_product.price} руб.")
+    lawn_grass2 = LawnGrass(
+        name="Спортивный газон",
+        description="Устойчивая трава для спортивных площадок",
+        price=1800.0,
+        quantity=30,
+        country="Нидерланды",
+        germination_period=21,
+        color="Темно-зеленый"
+    )
 
-    print("\n=== Статистика ===")
-    print(f"Всего категорий: {Category.category_count}")
-    print(f"Всего товаров: {Category.product_count}")
+    print("Смартфоны:")
+    print(f"  - {smartphone1}")
+    print(f"    Модель: {smartphone1.model}, Память: {smartphone1.memory}ГБ")
+    print(f"  - {smartphone2}")
+    print(f"    Модель: {smartphone2.model}, Память: {smartphone2.memory}ГБ")
 
-    # Загрузка из JSON
-    print("\n=== Загрузка из JSON ===")
-    data_file_path = get_data_path()
-    print(f"Ищем файл по пути: {data_file_path}")
-    categories = load_categories_from_json(data_file_path)
+    print("\nГазонная трава:")
+    print(f"  - {lawn_grass1}")
+    print(f"    Страна: {lawn_grass1.country}, Прорастание: {lawn_grass1.germination_period} дней")
+    print(f"  - {lawn_grass2}")
+    print(f"    Страна: {lawn_grass2.country}, Прорастание: {lawn_grass2.germination_period} дней")
 
-    if categories:
-        print(f"Загружено категорий: {len(categories)}")
-        for category in categories:
-            print(f"\nКатегория: {category.name}")
-            print(f"Товаров: {len(category.products)}")
-            for product in category.products:
-                template = "  - {}: {} руб. (в наличии: {})"
-                print(template.format(
-                    product.name, product.price, product.quantity
-                ))
+    print("\n=== Демонстрация сложения товаров одного типа ===")
+
+    # Сложение смартфонов (должно работать)
+    try:
+        smartphones_total = smartphone1 + smartphone2
+        print(f"Общая стоимость смартфонов: {smartphones_total} руб.")
+    except TypeError as e:
+        print(f"Ошибка при сложении смартфонов: {e}")
+
+    # Сложение газонной травы (должно работать)
+    try:
+        lawn_grass_total = lawn_grass1 + lawn_grass2
+        print(f"Общая стоимость газонной травы: {lawn_grass_total} руб.")
+    except TypeError as e:
+        print(f"Ошибка при сложении газонной травы: {e}")
+
+    # Попытка сложить разные типы товаров (должна вызвать ошибку)
+    print("\n=== Попытка сложить разные типы товаров ===")
+    try:
+        invalid_total = smartphone1 + lawn_grass1
+        print(f"Результат: {invalid_total} руб.")
+    except TypeError as e:
+        print(f"Ошибка (ожидаемо): {e}")
+
+    print("\n=== Демонстрация добавления товаров в категории ===")
+
+    # Создание категорий
+    smartphones_category = Category("Смартфоны", "Мобильные устройства")
+    lawn_grass_category = Category("Газонная трава", "Растительность для ландшафта")
+
+    # Добавление товаров в категории (должно работать)
+    try:
+        smartphones_category.add_product(smartphone1)
+        smartphones_category.add_product(smartphone2)
+        print("Смартфоны успешно добавлены в категорию")
+    except TypeError as e:
+        print(f"Ошибка при добавлении смартфона: {e}")
+
+    try:
+        lawn_grass_category.add_product(lawn_grass1)
+        lawn_grass_category.add_product(lawn_grass2)
+        print("Газонная трава успешно добавлена в категорию")
+    except TypeError as e:
+        print(f"Ошибка при добавлении газонной травы: {e}")
+
+    # Попытка добавить неправильный объект (должна вызвать ошибку)
+    print("\n=== Попытка добавить неправильный объект в категорию ===")
+    try:
+        smartphones_category.add_product("не товар")
+        print("Объект добавлен")
+    except TypeError as e:
+        print(f"Ошибка (ожидаемо): {e}")
+
+    print("\n=== Итоговые категории ===")
+    print(f"Категория: {smartphones_category}")
+    print("Товары:")
+    for product in smartphones_category:
+        print(f"  - {product}")
+
+    print(f"\nКатегория: {lawn_grass_category}")
+    print("Товары:")
+    for product in lawn_grass_category:
+        print(f"  - {product}")
 
     print("\n=== Итоговая статистика ===")
     print(f"Всего категорий: {Category.category_count}")
