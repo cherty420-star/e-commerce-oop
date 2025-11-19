@@ -4,7 +4,7 @@ from typing import List, Dict
 
 class Product:
     """
-    Класс для представления товара.
+    Базовый класс для представления товара.
 
     Attributes:
         name (str): Название товара
@@ -44,7 +44,6 @@ class Product:
         if new_price <= 0:
             print("Цена не должна быть нулевая или отрицательная")
         else:
-            # Дополнительная логика с подтверждением пользователем
             if hasattr(self, '_Product__price') and new_price < self.__price:
                 confirmation = input(
                     f"Цена понижается с {self.__price} до {new_price}. "
@@ -67,8 +66,8 @@ class Product:
         Returns:
             float: Сумма произведений цены на количество для двух товаров
         """
-        if not isinstance(other, Product):
-            raise TypeError("Можно складывать только объекты класса Product")
+        if type(self) != type(other):
+            raise TypeError("Можно складывать только товары одного типа")
 
         return (self.price * self.quantity) + (other.price * other.quantity)
 
@@ -97,13 +96,85 @@ class Product:
         if products_list:
             for existing_product in products_list:
                 if existing_product.name.lower() == name.lower():
-                    # Объединяем количество и выбираем максимальную цену
                     existing_product.quantity += quantity
                     if price > existing_product.price:
                         existing_product.price = price
                     return existing_product
 
         return cls(name, description, price, quantity)
+
+
+class Smartphone(Product):
+    """
+    Класс для представления смартфона.
+
+    Attributes:
+        efficiency (float): Производительность
+        model (str): Модель смартфона
+        memory (int): Объем встроенной памяти (ГБ)
+        color (str): Цвет
+    """
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 efficiency: float, model: str, memory: int, color: str):
+        """
+        Инициализация смартфона.
+
+        Args:
+            name: Название товара
+            description: Описание товара
+            price: Цена товара
+            quantity: Количество в наличии
+            efficiency: Производительность
+            model: Модель смартфона
+            memory: Объем встроенной памяти (ГБ)
+            color: Цвет
+        """
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+    def __repr__(self):
+        """Представление объекта для отладки."""
+        return (f"Smartphone('{self.name}', '{self.description}', {self.price}, "
+                f"{self.quantity}, {self.efficiency}, '{self.model}', {self.memory}, '{self.color}')")
+
+
+class LawnGrass(Product):
+    """
+    Класс для представления газонной травы.
+
+    Attributes:
+        country (str): Страна-производитель
+        germination_period (int): Срок прорастания (дни)
+        color (str): Цвет
+    """
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 country: str, germination_period: int, color: str):
+        """
+        Инициализация газонной травы.
+
+        Args:
+            name: Название товара
+            description: Описание товара
+            price: Цена товара
+            quantity: Количество в наличии
+            country: Страна-производитель
+            germination_period: Срок прорастания (дни)
+            color: Цвет
+        """
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+
+    def __repr__(self):
+        """Представление объекта для отладки."""
+        return (f"LawnGrass('{self.name}', '{self.description}', {self.price}, "
+                f"{self.quantity}, '{self.country}', {self.germination_period}, '{self.color}')")
 
 
 class Category:
@@ -162,7 +233,13 @@ class Category:
 
         Args:
             product: Объект товара для добавления
+
+        Raises:
+            TypeError: Если переданный объект не является продуктом или его наследником
         """
+        if not isinstance(product, Product):
+            raise TypeError("Можно добавлять только объекты класса Product или его наследников")
+
         self.__products.append(product)
         Category.product_count += 1
 
@@ -171,7 +248,7 @@ class Category:
         """Геттер для списка товаров в формате строк."""
         products_str = ""
         for product in self.__products:
-            products_str += f"{product}\n"  # Используем __str__ продукта
+            products_str += f"{product}\n"
         return products_str.rstrip()
 
     def get_products_list(self):
@@ -235,20 +312,17 @@ def load_categories_from_json(file_path: str) -> List[Category]:
             data = json.load(file)
 
         categories = []
-        all_products = []  # Для отслеживания всех товаров при создании
+        all_products = []
 
-        # Первый проход: собираем все товары для проверки дубликатов
         for category_data in data:
             for product_data in category_data['products']:
                 product = Product.new_product(product_data, all_products)
                 if product not in all_products:
                     all_products.append(product)
 
-        # Второй проход: создаем категории с товарами
         for category_data in data:
             category_products = []
             for product_data in category_data['products']:
-                # Находим соответствующий товар в списке всех товаров
                 for product in all_products:
                     if product.name == product_data['name']:
                         category_products.append(product)
