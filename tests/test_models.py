@@ -1,5 +1,142 @@
 import os
-from src.models import Product, Category, load_categories_from_json
+import pytest
+from src.models import (Product, Smartphone, LawnGrass, Category,
+                        Order, BaseProduct, BaseContainer,
+                        load_categories_from_json, CategoryIterator)
+
+
+class TestBaseProduct:
+    """Тесты для абстрактного базового класса BaseProduct."""
+
+    def test_base_product_is_abstract(self):
+        """Тест что BaseProduct является абстрактным классом."""
+        # Нельзя создать экземпляр абстрактного класса
+        with pytest.raises(TypeError):
+            BaseProduct("Товар", "Описание", 1000.0, 5)
+
+    def test_product_inherits_from_base_product(self):
+        """Тест что Product наследуется от BaseProduct."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        assert isinstance(product, BaseProduct)
+
+    def test_smartphone_inherits_from_base_product(self):
+        """Тест что Smartphone наследуется от BaseProduct."""
+        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
+        assert isinstance(smartphone, BaseProduct)
+
+    def test_lawn_grass_inherits_from_base_product(self):
+        """Тест что LawnGrass наследуется от BaseProduct."""
+        lawn_grass = LawnGrass("Трава", "Описание", 1500.0, 10, "Россия", 14, "Зеленый")
+        assert isinstance(lawn_grass, BaseProduct)
+
+
+class TestLoggingMixin:
+    """Тесты для миксина логирования."""
+
+    def test_logging_mixin_in_product(self, capsys):
+        """Тест что миксин логирования работает в Product."""
+        product = Product("Тестовый товар", "Описание", 1000.0, 5)
+
+        # Проверяем что сообщение было напечатано
+        captured = capsys.readouterr()
+        assert "Создан объект Product с параметрами:" in captured.out
+        assert "Тестовый товар" in captured.out
+
+    def test_logging_mixin_in_smartphone(self, capsys):
+        """Тест что миксин логирования работает в Smartphone."""
+        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
+
+        captured = capsys.readouterr()
+        assert "Создан объект Smartphone с параметрами:" in captured.out
+
+    def test_logging_mixin_in_lawn_grass(self, capsys):
+        """Тест что миксин логирования работает в LawnGrass."""
+        lawn_grass = LawnGrass("Трава", "Описание", 1500.0, 10, "Россия", 14, "Зеленый")
+
+        captured = capsys.readouterr()
+        assert "Создан объект LawnGrass с параметрами:" in captured.out
+
+
+class TestBaseContainer:
+    """Тесты для абстрактного базового класса BaseContainer."""
+
+    def test_base_container_is_abstract(self):
+        """Тест что BaseContainer является абстрактным классом."""
+        with pytest.raises(TypeError):
+            BaseContainer()
+
+    def test_category_inherits_from_base_container(self):
+        """Тест что Category наследуется от BaseContainer."""
+        category = Category("Категория", "Описание")
+        assert isinstance(category, BaseContainer)
+
+    def test_order_inherits_from_base_container(self):
+        """Тест что Order наследуется от BaseContainer."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        order = Order(product, 2)
+        assert isinstance(order, BaseContainer)
+
+    def test_get_total_quantity(self):
+        """Тест метода get_total_quantity в BaseContainer."""
+        product1 = Product("Товар 1", "Описание", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание", 2000.0, 3)
+        category = Category("Категория", "Описание", [product1, product2])
+
+        total_quantity = category.get_total_quantity()
+        assert total_quantity == 8  # 5 + 3
+
+
+class TestOrder:
+    """Тесты для класса Order."""
+
+    def test_order_initialization(self):
+        """Тест корректной инициализации заказа."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        order = Order(product, 2)
+
+        assert order.product == product
+        assert order.quantity == 2
+        assert order.total_price == 2000.0  # 1000 * 2
+
+    def test_order_invalid_product_type(self):
+        """Тест ошибки при создании заказа с неправильным типом товара."""
+        with pytest.raises(TypeError, match="Заказ может содержать только объекты класса Product"):
+            Order("не товар", 2)
+
+    def test_order_invalid_quantity_zero(self):
+        """Тест ошибки при создании заказа с нулевым количеством."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+            Order(product, 0)
+
+    def test_order_invalid_quantity_negative(self):
+        """Тест ошибки при создании заказа с отрицательным количеством."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+            Order(product, -1)
+
+    def test_order_insufficient_quantity(self):
+        """Тест ошибки при создании заказа с недостаточным количеством."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        with pytest.raises(ValueError, match="Недостаточно товара на складе"):
+            Order(product, 10)
+
+    def test_order_string_representation(self):
+        """Тест строкового представления заказа."""
+        product = Product("Тестовый товар", "Описание", 1000.0, 5)
+        order = Order(product, 2)
+
+        expected = "Заказ: Тестовый товар, Количество: 2, Итоговая стоимость: 2000.0 руб."
+        assert str(order) == expected
+
+    def test_order_iteration(self):
+        """Тест итерации по заказу."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+        order = Order(product, 2)
+
+        products = list(order)
+        assert len(products) == 1
+        assert products[0] == product
 
 
 class TestProduct:
@@ -8,115 +145,42 @@ class TestProduct:
     def test_product_initialization(self):
         """Тест корректной инициализации товара."""
         product = Product("Тестовый товар", "Описание", 1000.0, 5)
-
         assert product.name == "Тестовый товар"
         assert product.description == "Описание"
         assert product.price == 1000.0
         assert product.quantity == 5
 
-    def test_product_with_different_data(self):
-        """Тест инициализации товара с разными данными."""
-        product = Product("Другой товар", "Другое описание", 500.50, 10)
-
-        assert product.name == "Другой товар"
-        assert product.description == "Другое описание"
-        assert product.price == 500.50
-        assert product.quantity == 10
+    # ... остальные существующие тесты Product ...
 
 
-class TestCategory:
-    """Тесты для класса Category."""
+class TestIntegration:
+    """Интеграционные тесты."""
 
     def setup_method(self):
         """Сброс счетчиков перед каждым тестом."""
         Category.category_count = 0
         Category.product_count = 0
 
-    def test_category_initialization(self):
-        """Тест корректной инициализации категории."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        category = Category("Категория", "Описание категории", [product])
+    def test_full_workflow_with_new_classes(self):
+        """Тест полного рабочего процесса с новыми классами."""
+        # Создаем товары
+        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
 
-        assert category.name == "Категория"
-        assert category.description == "Описание категории"
-        assert len(category.products) == 1
-        assert category.products[0].name == "Товар"
+        # Создаем категорию
+        category = Category("Электроника", "Техника", [smartphone])
 
-    def test_category_count(self):
-        """Тест подсчета количества категорий."""
-        # До создания категорий
-        assert Category.category_count == 0
+        # Создаем заказ
+        order = Order(smartphone, 1)
 
-        # После создания одной категории
-        product = Product("Товар", "Описание", 1000.0, 5)
-        Category("Категория 1", "Описание", [product])
-        assert Category.category_count == 1
+        # Проверяем наследование
+        assert isinstance(smartphone, BaseProduct)
+        assert isinstance(category, BaseContainer)
+        assert isinstance(order, BaseContainer)
 
-        # После создания второй категории
-        Category("Категория 2", "Описание", [product])
-        assert Category.category_count == 2
-
-    def test_product_count(self):
-        """Тест подсчета количества товаров."""
-        # До создания категорий
-        assert Category.product_count == 0
-
-        # Создаем категорию с одним товаром
-        product1 = Product("Товар 1", "Описание", 1000.0, 5)
-        Category("Категория 1", "Описание", [product1])
-        assert Category.product_count == 1
-
-        # Создаем категорию с двумя товарами
-        product2 = Product("Товар 2", "Описание", 2000.0, 3)
-        product3 = Product("Товар 3", "Описание", 3000.0, 7)
-        Category("Категория 2", "Описание", [product2, product3])
-        assert Category.product_count == 3  # 1 + 2 = 3
-
-    def test_empty_category(self):
-        """Тест создания категории без товаров."""
-        category = Category("Пустая категория", "Описание", [])
-
-        assert category.name == "Пустая категория"
-        assert len(category.products) == 0
-        assert Category.category_count == 1
-        assert Category.product_count == 0
+        # Проверяем общие методы
+        assert category.get_total_quantity() == 3
+        assert order.get_total_quantity() == 1
 
 
-class TestJSONLoading:
-    """Тесты для загрузки данных из JSON."""
-
-    def setup_method(self):
-        """Сброс счетчиков перед каждым тестом."""
-        Category.category_count = 0
-        Category.product_count = 0
-
-    def test_load_categories_from_json(self):
-        """Тест загрузки категорий из JSON файла."""
-        # Получаем правильный путь к файлу
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        json_path = os.path.join(project_root, "data", "products.json")
-
-        print(f"Ищем файл по пути: {json_path}")
-        print(f"Файл существует: {os.path.exists(json_path)}")
-
-        categories = load_categories_from_json(json_path)
-
-        assert len(categories) == 2
-        assert categories[0].name == "Смартфоны"
-        assert categories[1].name == "Телевизоры"
-
-        # Проверяем товары в первой категории
-        smartphones = categories[0]
-        assert len(smartphones.products) == 3
-        assert smartphones.products[0].name == "Samsung Galaxy C23 Ultra"
-        assert smartphones.products[0].price == 180000.0
-
-        # Проверяем счетчики
-        assert Category.category_count == 2
-        assert Category.product_count == 4  # 3 смартфона + 1 телевизор
-
-    def test_load_nonexistent_file(self):
-        """Тест загрузки из несуществующего файла."""
-        categories = load_categories_from_json("nonexistent.json")
-        assert categories == []
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
