@@ -62,67 +62,60 @@ e-commerce-oop/
 │   └── products.json     # Данные для загрузки
 ├── requirements.txt
 └── README.md
-Тестирование
-Проект включает комплексные тесты для:
 
-Базовых классов Product и Category
+Примеры использования
+Создание товаров
+from src.models import Product, Smartphone, LawnGrass
 
-Классов-наследников Smartphone и LawnGrass
+# Базовый товар
+product = Product("Товар", "Описание", 1000.0, 10)
 
-Магических методов
-
-Ограничений сложения и добавления
-
-Загрузки данных из JSON
-
-Покрытие кода тестами: более 85%
-
-💡 Примеры использования
-Создание классов-наследников
-
-# Создание смартфона
+# Смартфон
 smartphone = Smartphone(
-    name="iPhone 15 Pro",
+    name="iPhone 15 Pro", 
     description="Флагманский смартфон",
-    price=120000.0,
-    quantity=8,
-    efficiency=4.5,
-    model="15 Pro",
-    memory=256,
-    color="Титановый синий"
+    price=120000.0, 
+    quantity=5,
+    efficiency=4.5, 
+    model="15 Pro", 
+    memory=256, 
+    color="Синий"
 )
 
-# Создание газонной травы
+# Газонная трава
 lawn_grass = LawnGrass(
-    name="Газонная трава Премиум",
-    description="Элитная газонная трава",
+    name="Газонная трава",
+    description="Качественная трава",
     price=2500.0,
-    quantity=50,
+    quantity=20,
     country="Германия",
     germination_period=14,
     color="Зеленый"
 )
-Ограничения операций
 
-# Корректное сложение (одинаковые типы)
-total_smartphones = smartphone1 + smartphone2
-total_grass = lawn_grass1 + lawn_grass2
+Работа с категориями:
+from src.models import Category
 
-# Ошибка сложения (разные типы)
-try:
-    invalid = smartphone + lawn_grass  # TypeError
-except TypeError as e:
-    print(e)
+category = Category("Электроника", "Технические товары")
+category.add_product(smartphone)
+print(category)  # "Электроника, количество продуктов: 5 шт."
 
-# Корректное добавление в категорию
-category.add_product(smartphone)  # ✅
-category.add_product(lawn_grass)  # ✅
+Создание заказов:
+from src.models import Order
 
-# Ошибка добавления
-try:
-    category.add_product("не товар")  # TypeError
-except TypeError as e:
-    print(e)
+order = Order(product=smartphone, quantity=2)
+print(order)  # "Заказ: iPhone 15 Pro, Количество: 2, Итоговая стоимость: 240000.0 руб."
+
+Тестирование
+Проект включает комплексные тесты для всех функциональностей.
+Покрытие кода тестами составляет более 85%.
+
+# Запуск тестов
+pytest tests/test_models.py -v
+
+# Проверка покрытия
+pytest --cov=src --cov-report=html
+
 История изменений
 Версия 1.0
 Базовые классы Product и Category
@@ -131,58 +124,21 @@ except TypeError as e:
 
 Магические методы
 
-Версия 1.1 (ТЕКУЩАЯ)
+Версия 1.1
 Классы-наследники: Smartphone и LawnGrass
 
 Ограничения операций: сложение и добавление
 
-Улучшенная валидация типов
+Версия 1.2
+Абстрактный класс BaseProduct для всех товаров
 
-Расширенное тестирование
+Миксин LoggingMixin для логирования создания объектов
+
+Абстрактный класс BaseContainer для контейнеров
+
+Класс Order для управления заказами
 
 Разработка
 Проект разработан в учебных целях для изучения ООП в Python.
 Соответствует стандартам PEP 8 и включает полное тестовое покрытие.
 
-Примеры использования нового функционала:
-Абстрактный класс BaseProduct
-# Все товары наследуются от BaseProduct
-product = Product("Товар", "Описание", 1000.0, 5)
-smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
-
-print(isinstance(product, BaseProduct))  # True
-print(isinstance(smartphone, BaseProduct))  # True
-
-Миксин логирования
-# При создании объектов выводится информация в консоль
-product = Product("Товар", "Описание", 1000.0, 5)
-# В консоли: "Создан объект Product с параметрами: ..."
-
-Класс Order
-# Создание заказа
-product = Product("Товар", "Описание", 1000.0, 5)
-order = Order(product=product, quantity=2)
-print(order)  # "Заказ: Товар, Количество: 2, Итоговая стоимость: 2000.0 руб."
-
-# Ошибки при создании заказа
-try:
-    Order(product="не товар", quantity=2)  # TypeError
-except TypeError as e:
-    print(e)
-
-try:
-    Order(product=product, quantity=10)  # ValueError (недостаточно товара)
-except ValueError as e:
-    print(e)
-
-Абстрактный класс BaseContainer
-# Category и Order наследуются от BaseContainer
-category = Category("Электроника", "Техника")
-order = Order(product, 2)
-
-print(isinstance(category, BaseContainer))  # True
-print(isinstance(order, BaseContainer))  # True
-
-# Общие методы
-print(category.get_total_quantity())
-print(order.get_total_quantity())
