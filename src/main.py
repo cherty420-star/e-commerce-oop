@@ -1,5 +1,6 @@
 import os
-from src.models import Product, Smartphone, LawnGrass, Category, load_categories_from_json
+from src.models import (Product, Smartphone, LawnGrass, Category,
+                        Order, BaseProduct, load_categories_from_json)
 
 
 def get_data_path():
@@ -12,9 +13,18 @@ def get_data_path():
 def main():
     """Основная функция для демонстрации работы классов."""
 
-    print("=== Демонстрация классов-наследников ===")
+    print("=== Демонстрация абстрактного класса и миксина ===")
 
-    # Создание смартфонов
+    # Создание товаров с логированием (миксин)
+    print("\nСоздание товаров (должны появиться сообщения о создании):")
+
+    product1 = Product(
+        name="Обычный товар",
+        description="Простой товар для демонстрации",
+        price=1000.0,
+        quantity=10
+    )
+
     smartphone1 = Smartphone(
         name="iPhone 15 Pro",
         description="Флагманский смартфон Apple",
@@ -26,18 +36,6 @@ def main():
         color="Титановый синий"
     )
 
-    smartphone2 = Smartphone(
-        name="Samsung Galaxy S24",
-        description="Флагманский смартфон Samsung",
-        price=100000.0,
-        quantity=12,
-        efficiency=4.8,
-        model="S24 Ultra",
-        memory=512,
-        color="Черный"
-    )
-
-    # Создание газонной травы
     lawn_grass1 = LawnGrass(
         name="Газонная трава Премиум",
         description="Элитная газонная трава для ландшафтного дизайна",
@@ -48,91 +46,62 @@ def main():
         color="Ярко-зеленый"
     )
 
-    lawn_grass2 = LawnGrass(
-        name="Спортивный газон",
-        description="Устойчивая трава для спортивных площадок",
-        price=1800.0,
-        quantity=30,
-        country="Нидерланды",
-        germination_period=21,
-        color="Темно-зеленый"
-    )
+    print("\n=== Проверка наследования от BaseProduct ===")
+    print(f"Product является наследником BaseProduct: {isinstance(product1, BaseProduct)}")
+    print(f"Smartphone является наследником BaseProduct: {isinstance(smartphone1, BaseProduct)}")
+    print(f"LawnGrass является наследником BaseProduct: {isinstance(lawn_grass1, BaseProduct)}")
 
-    print("Смартфоны:")
-    print(f"  - {smartphone1}")
-    print(f"    Модель: {smartphone1.model}, Память: {smartphone1.memory}ГБ")
-    print(f"  - {smartphone2}")
-    print(f"    Модель: {smartphone2.model}, Память: {smartphone2.memory}ГБ")
-
-    print("\nГазонная трава:")
-    print(f"  - {lawn_grass1}")
-    print(f"    Страна: {lawn_grass1.country}, Прорастание: {lawn_grass1.germination_period} дней")
-    print(f"  - {lawn_grass2}")
-    print(f"    Страна: {lawn_grass2.country}, Прорастание: {lawn_grass2.germination_period} дней")
-
-    print("\n=== Демонстрация сложения товаров одного типа ===")
-
-    # Сложение смартфонов (должно работать)
-    try:
-        smartphones_total = smartphone1 + smartphone2
-        print(f"Общая стоимость смартфонов: {smartphones_total} руб.")
-    except TypeError as e:
-        print(f"Ошибка при сложении смартфонов: {e}")
-
-    # Сложение газонной травы (должно работать)
-    try:
-        lawn_grass_total = lawn_grass1 + lawn_grass2
-        print(f"Общая стоимость газонной травы: {lawn_grass_total} руб.")
-    except TypeError as e:
-        print(f"Ошибка при сложении газонной травы: {e}")
-
-    # Попытка сложить разные типы товаров (должна вызвать ошибку)
-    print("\n=== Попытка сложить разные типы товаров ===")
-    try:
-        invalid_total = smartphone1 + lawn_grass1
-        print(f"Результат: {invalid_total} руб.")
-    except TypeError as e:
-        print(f"Ошибка (ожидаемо): {e}")
-
-    print("\n=== Демонстрация добавления товаров в категории ===")
-
-    # Создание категорий
-    smartphones_category = Category("Смартфоны", "Мобильные устройства")
-    lawn_grass_category = Category("Газонная трава", "Растительность для ландшафта")
-
-    # Добавление товаров в категории (должно работать)
-    try:
-        smartphones_category.add_product(smartphone1)
-        smartphones_category.add_product(smartphone2)
-        print("Смартфоны успешно добавлены в категорию")
-    except TypeError as e:
-        print(f"Ошибка при добавлении смартфона: {e}")
+    print("\n=== Демонстрация работы Order класса (доп. задание) ===")
 
     try:
-        lawn_grass_category.add_product(lawn_grass1)
-        lawn_grass_category.add_product(lawn_grass2)
-        print("Газонная трава успешно добавлена в категорию")
-    except TypeError as e:
-        print(f"Ошибка при добавлении газонной травы: {e}")
+        # Создание заказа
+        order1 = Order(product=smartphone1, quantity=2)
+        print(f"Создан заказ: {order1}")
 
-    # Попытка добавить неправильный объект (должна вызвать ошибку)
-    print("\n=== Попытка добавить неправильный объект в категорию ===")
-    try:
-        smartphones_category.add_product("не товар")
-        print("Объект добавлен")
-    except TypeError as e:
-        print(f"Ошибка (ожидаемо): {e}")
+        # Попытка создать заказ с недостаточным количеством
+        try:
+            order_invalid = Order(product=smartphone1, quantity=20)
+        except ValueError as e:
+            print(f"Ошибка создания заказа (ожидаемо): {e}")
 
-    print("\n=== Итоговые категории ===")
-    print(f"Категория: {smartphones_category}")
-    print("Товары:")
-    for product in smartphones_category:
+        # Попытка создать заказ с неправильным объектом
+        try:
+            order_invalid = Order(product="не товар", quantity=2)
+        except TypeError as e:
+            print(f"Ошибка создания заказа (ожидаемо): {e}")
+
+    except Exception as e:
+        print(f"Ошибка при работе с заказами: {e}")
+
+    print("\n=== Демонстрация общего абстрактного класса BaseContainer ===")
+
+    # Создание категории
+    category = Category("Электроника", "Технические товары", [product1, smartphone1])
+    print(f"Категория: {category}")
+    print(f"Общее количество в категории: {category.get_total_quantity()}")
+
+    # Создание заказа
+    order = Order(product=smartphone1, quantity=1)
+    print(f"Заказ: {order}")
+    print(f"Общее количество в заказе: {order.get_total_quantity()}")
+
+    print("\n=== Итерация по контейнерам ===")
+    print("Товары в категории:")
+    for product in category:
         print(f"  - {product}")
 
-    print(f"\nКатегория: {lawn_grass_category}")
-    print("Товары:")
-    for product in lawn_grass_category:
+    print("Товары в заказе:")
+    for product in order:
         print(f"  - {product}")
+
+    print("\n=== Загрузка из JSON ===")
+    data_file_path = get_data_path()
+    categories = load_categories_from_json(data_file_path)
+
+    if categories:
+        print(f"Загружено категорий: {len(categories)}")
+        for category in categories:
+            print(f"\nКатегория: {category}")
 
     print("\n=== Итоговая статистика ===")
     print(f"Всего категорий: {Category.category_count}")
