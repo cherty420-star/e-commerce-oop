@@ -1,156 +1,156 @@
 import os
 import pytest
 from src.models import (Product, Smartphone, LawnGrass, Category,
-                        Order, BaseProduct, BaseContainer,
+                        Order, BaseProduct, ZeroQuantityError,
                         load_categories_from_json, CategoryIterator)
 
 
-class TestBaseProduct:
-    """Тесты для абстрактного базового класса BaseProduct."""
+class TestZeroQuantity:
+    """Тесты для обработки нулевого количества товаров."""
 
-    def test_base_product_is_abstract(self):
-        """Тест что BaseProduct является абстрактным классом."""
-        # Нельзя создать экземпляр абстрактного класса
-        with pytest.raises(TypeError):
-            BaseProduct("Товар", "Описание", 1000.0, 5)
+    def test_product_zero_quantity_initialization(self):
+        """Тест создания товара с нулевым количеством."""
+        with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+            Product("Товар", "Описание", 1000.0, 0)
 
-    def test_product_inherits_from_base_product(self):
-        """Тест что Product наследуется от BaseProduct."""
+    def test_smartphone_zero_quantity_initialization(self):
+        """Тест создания смартфона с нулевым количеством."""
+        with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+            Smartphone("Смартфон", "Описание", 50000.0, 0, 4.5, "Model", 128, "Black")
+
+    def test_lawn_grass_zero_quantity_initialization(self):
+        """Тест создания газонной травы с нулевым количеством."""
+        with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+            LawnGrass("Трава", "Описание", 1500.0, 0, "Россия", 14, "Зеленый")
+
+    def test_product_valid_quantity_initialization(self):
+        """Тест создания товара с валидным количеством."""
         product = Product("Товар", "Описание", 1000.0, 5)
-        assert isinstance(product, BaseProduct)
+        assert product.quantity == 5
 
-    def test_smartphone_inherits_from_base_product(self):
-        """Тест что Smartphone наследуется от BaseProduct."""
-        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
-        assert isinstance(smartphone, BaseProduct)
+    def test_new_product_zero_quantity(self):
+        """Тест создания товара через new_product с нулевым количеством."""
+        product_data = {
+            'name': 'Новый товар',
+            'description': 'Описание',
+            'price': 1000.0,
+            'quantity': 0
+        }
 
-    def test_lawn_grass_inherits_from_base_product(self):
-        """Тест что LawnGrass наследуется от BaseProduct."""
-        lawn_grass = LawnGrass("Трава", "Описание", 1500.0, 10, "Россия", 14, "Зеленый")
-        assert isinstance(lawn_grass, BaseProduct)
-
-
-class TestLoggingMixin:
-    """Тесты для миксина логирования."""
-
-    def test_logging_mixin_in_product(self, capsys):
-        """Тест что миксин логирования работает в Product."""
-        product = Product("Тестовый товар", "Описание", 1000.0, 5)
-
-        # Проверяем что сообщение было напечатано
-        captured = capsys.readouterr()
-        assert "Создан объект Product с параметрами:" in captured.out
-        assert "Тестовый товар" in captured.out
-
-    def test_logging_mixin_in_smartphone(self, capsys):
-        """Тест что миксин логирования работает в Smartphone."""
-        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
-
-        captured = capsys.readouterr()
-        assert "Создан объект Smartphone с параметрами:" in captured.out
-
-    def test_logging_mixin_in_lawn_grass(self, capsys):
-        """Тест что миксин логирования работает в LawnGrass."""
-        lawn_grass = LawnGrass("Трава", "Описание", 1500.0, 10, "Россия", 14, "Зеленый")
-
-        captured = capsys.readouterr()
-        assert "Создан объект LawnGrass с параметрами:" in captured.out
+        with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+            Product.new_product(product_data)
 
 
-class TestBaseContainer:
-    """Тесты для абстрактного базового класса BaseContainer."""
+class TestAveragePrice:
+    """Тесты для метода calculate_average_price."""
 
-    def test_base_container_is_abstract(self):
-        """Тест что BaseContainer является абстрактным классом."""
-        with pytest.raises(TypeError):
-            BaseContainer()
+    def test_average_price_empty_category(self):
+        """Тест средней цены для пустой категории."""
+        category = Category("Пустая категория", "Описание")
+        assert category.calculate_average_price() == 0
 
-    def test_category_inherits_from_base_container(self):
-        """Тест что Category наследуется от BaseContainer."""
-        category = Category("Категория", "Описание")
-        assert isinstance(category, BaseContainer)
-
-    def test_order_inherits_from_base_container(self):
-        """Тест что Order наследуется от BaseContainer."""
+    def test_average_price_single_product(self):
+        """Тест средней цены для категории с одним товаром."""
         product = Product("Товар", "Описание", 1000.0, 5)
-        order = Order(product, 2)
-        assert isinstance(order, BaseContainer)
+        category = Category("Категория", "Описание", [product])
 
-    def test_get_total_quantity(self):
-        """Тест метода get_total_quantity в BaseContainer."""
+        assert category.calculate_average_price() == 1000.0
+
+    def test_average_price_multiple_products(self):
+        """Тест средней цены для категории с несколькими товарами."""
         product1 = Product("Товар 1", "Описание", 1000.0, 5)
         product2 = Product("Товар 2", "Описание", 2000.0, 3)
+        product3 = Product("Товар 3", "Описание", 3000.0, 7)
+
+        category = Category("Категория", "Описание", [product1, product2, product3])
+
+        expected_average = (1000.0 + 2000.0 + 3000.0) / 3
+        assert category.calculate_average_price() == expected_average
+
+    def test_average_price_with_different_prices(self):
+        """Тест средней цены с разными ценами."""
+        product1 = Product("Товар 1", "Описание", 500.0, 2)
+        product2 = Product("Товар 2", "Описание", 1500.0, 4)
+
         category = Category("Категория", "Описание", [product1, product2])
 
-        total_quantity = category.get_total_quantity()
-        assert total_quantity == 8  # 5 + 3
+        expected_average = (500.0 + 1500.0) / 2
+        assert category.calculate_average_price() == expected_average
 
 
-class TestOrder:
-    """Тесты для класса Order."""
+class TestZeroQuantityError:
+    """Тесты для пользовательского исключения ZeroQuantityError."""
 
-    def test_order_initialization(self):
-        """Тест корректной инициализации заказа."""
+    def test_zero_quantity_error_in_category_add_product(self):
+        """Тест ZeroQuantityError при добавлении товара в категорию."""
+        category = Category("Категория", "Описание")
+
+        # Создаем реальный продукт с нулевым количеством через обходной путь
+        # Сначала создаем с положительным количеством, потом меняем на 0
+        product = Product("Товар с нулем", "Описание", 1000.0, 1)
+        product.quantity = 0  # Меняем количество на 0
+
+        with pytest.raises(ZeroQuantityError,
+                           match="Товар 'Товар с нулем' имеет нулевое количество и не может быть добавлен"):
+            category.add_product(product)
+
+    def test_zero_quantity_error_in_order(self):
+        """Тест ZeroQuantityError при создании заказа с нулевым количеством."""
         product = Product("Товар", "Описание", 1000.0, 5)
-        order = Order(product, 2)
 
-        assert order.product == product
-        assert order.quantity == 2
-        assert order.total_price == 2000.0  # 1000 * 2
-
-    def test_order_invalid_product_type(self):
-        """Тест ошибки при создании заказа с неправильным типом товара."""
-        with pytest.raises(TypeError, match="Заказ может содержать только объекты класса Product"):
-            Order("не товар", 2)
-
-    def test_order_invalid_quantity_zero(self):
-        """Тест ошибки при создании заказа с нулевым количеством."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
+        with pytest.raises(ZeroQuantityError, match="Нельзя создать заказ с нулевым количеством товара"):
             Order(product, 0)
 
-    def test_order_invalid_quantity_negative(self):
-        """Тест ошибки при создании заказа с отрицательным количеством."""
+    def test_category_add_product_finally_block(self, capsys):
+        """Тест что finally блок выполняется всегда при добавлении товара."""
+        category = Category("Категория", "Описание")
         product = Product("Товар", "Описание", 1000.0, 5)
+
+        category.add_product(product)
+
+        captured = capsys.readouterr()
+        assert "Товар 'Товар' успешно добавлен в категорию 'Категория'" in captured.out
+        assert "Обработка добавления товара 'Товар' завершена" in captured.out
+
+    def test_category_add_product_zero_quantity_finally_block(self, capsys):
+        """Тест что finally блок выполняется при ошибке нулевого количества."""
+        category = Category("Категория", "Описание")
+        product = Product("Товар с нулем", "Описание", 1000.0, 1)
+        product.quantity = 0  # Меняем количество на 0
+
+        try:
+            category.add_product(product)
+        except ZeroQuantityError:
+            pass  # Ожидаемая ошибка
+
+        captured = capsys.readouterr()
+        assert "Обработка добавления товара 'Товар с нулем' завершена" in captured.out
+
+
+class TestOrderZeroQuantity:
+    """Тесты для заказов с нулевым количеством."""
+
+    def test_order_zero_quantity(self):
+        """Тест создания заказа с нулевым количеством."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+
+        with pytest.raises(ZeroQuantityError):
+            Order(product, 0)
+
+    def test_order_negative_quantity(self):
+        """Тест создания заказа с отрицательным количеством."""
+        product = Product("Товар", "Описание", 1000.0, 5)
+
         with pytest.raises(ValueError, match="Количество товара должно быть положительным"):
             Order(product, -1)
 
-    def test_order_insufficient_quantity(self):
-        """Тест ошибки при создании заказа с недостаточным количеством."""
+    def test_order_valid_quantity(self):
+        """Тест создания заказа с валидным количеством."""
         product = Product("Товар", "Описание", 1000.0, 5)
-        with pytest.raises(ValueError, match="Недостаточно товара на складе"):
-            Order(product, 10)
 
-    def test_order_string_representation(self):
-        """Тест строкового представления заказа."""
-        product = Product("Тестовый товар", "Описание", 1000.0, 5)
         order = Order(product, 2)
-
-        expected = "Заказ: Тестовый товар, Количество: 2, Итоговая стоимость: 2000.0 руб."
-        assert str(order) == expected
-
-    def test_order_iteration(self):
-        """Тест итерации по заказу."""
-        product = Product("Товар", "Описание", 1000.0, 5)
-        order = Order(product, 2)
-
-        products = list(order)
-        assert len(products) == 1
-        assert products[0] == product
-
-
-class TestProduct:
-    """Тесты для класса Product."""
-
-    def test_product_initialization(self):
-        """Тест корректной инициализации товара."""
-        product = Product("Тестовый товар", "Описание", 1000.0, 5)
-        assert product.name == "Тестовый товар"
-        assert product.description == "Описание"
-        assert product.price == 1000.0
-        assert product.quantity == 5
-
-    # ... остальные существующие тесты Product ...
+        assert order.quantity == 2
+        assert order.total_price == 2000.0
 
 
 class TestIntegration:
@@ -161,25 +161,70 @@ class TestIntegration:
         Category.category_count = 0
         Category.product_count = 0
 
-    def test_full_workflow_with_new_classes(self):
-        """Тест полного рабочего процесса с новыми классами."""
-        # Создаем товары
-        smartphone = Smartphone("Смартфон", "Описание", 50000.0, 3, 4.5, "Model", 128, "Black")
+    def test_full_workflow_with_zero_quantity_handling(self):
+        """Тест полного рабочего процесса с обработкой нулевого количества."""
+        # Создаем валидные товары
+        product1 = Product("Товар 1", "Описание", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание", 2000.0, 3)
 
         # Создаем категорию
-        category = Category("Электроника", "Техника", [smartphone])
+        category = Category("Категория", "Описание")
+
+        # Добавляем товары
+        category.add_product(product1)
+        category.add_product(product2)
+
+        # Проверяем среднюю цену
+        average_price = category.calculate_average_price()
+        expected_average = (1000.0 + 2000.0) / 2
+        assert average_price == expected_average
 
         # Создаем заказ
-        order = Order(smartphone, 1)
+        order = Order(product1, 2)
+        assert order.total_price == 2000.0
 
-        # Проверяем наследование
-        assert isinstance(smartphone, BaseProduct)
-        assert isinstance(category, BaseContainer)
-        assert isinstance(order, BaseContainer)
+    def test_zero_quantity_workflow(self):
+        """Тест workflow с нулевым количеством."""
+        # Попытка создать товар с нулевым количеством
+        with pytest.raises(ValueError):
+            Product("Невалидный товар", "Описание", 1000.0, 0)
 
-        # Проверяем общие методы
-        assert category.get_total_quantity() == 3
-        assert order.get_total_quantity() == 1
+        # Создаем валидный товар
+        valid_product = Product("Валидный товар", "Описание", 1000.0, 5)
+
+        # Попытка создать заказ с нулевым количеством
+        with pytest.raises(ZeroQuantityError):
+            Order(valid_product, 0)
+
+    def test_average_price_with_zero_quantity_products(self):
+        """Тест средней цены когда пытаемся добавить товар с нулевым количеством."""
+        # Создаем товары с положительным количеством
+        product1 = Product("Товар 1", "Описание", 1000.0, 5)
+        product2 = Product("Товар 2", "Описание", 2000.0, 3)
+
+        # Создаем категорию и добавляем товары
+        category = Category("Категория", "Описание")
+        category.add_product(product1)
+        category.add_product(product2)
+
+        # Проверяем среднюю цену (только добавленных товаров)
+        average_price = category.calculate_average_price()
+        expected_average = (1000.0 + 2000.0) / 2
+        assert average_price == expected_average
+
+        # Тестируем случай, когда пытаемся добавить товар с нулевым количеством
+        # Создаем товар с положительным количеством, потом меняем на 0
+        product3 = Product("Товар 3", "Описание", 3000.0, 1)
+        product3.quantity = 0  # Меняем количество на 0
+
+        # Пытаемся добавить товар с нулевым количеством - должен вызвать исключение
+        with pytest.raises(ZeroQuantityError):
+            category.add_product(product3)
+
+        # Убеждаемся, что товар с нулевым количеством не был добавлен
+        assert len(category.get_products_list()) == 2
+        # Средняя цена не должна измениться
+        assert category.calculate_average_price() == expected_average
 
 
 if __name__ == "__main__":

@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab97dbe4-3c44-42ee-88b4-28e69fa6a506" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/e-commerce-oop.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/e-commerce-oop.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_models.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_models.py" afterDir="false" />
@@ -52,7 +52,7 @@
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.models.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;#3 on feature/inheritance-restrictions&quot;
+    &quot;git-widget-placeholder&quot;: &quot;#4 on feature/abstract-classes-mixin&quot;
   }
 }</component>
   <component name="RunManager" selected="Python tests.Python tests in test_models.py">
