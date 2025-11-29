@@ -1,10 +1,8 @@
 [run]
-source = src
+source = src/models.py
 
 [report]
-exclude_lines =
-    pragma: no cover
-    def __repr__
-    if self.debug:
-    raise AssertionError
-    raise NotImplementedError
+show_missing = True
+
+[html]
+directory = htmlcov
